@@ -4,6 +4,6 @@ metadata:
   name: example-installation
 spec:
   namespacePrefix: intly
-  type: managed
+  type: workshop
 
 
