@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	mobilesecurityservice "github.com/aerogear/mobile-security-service-operator/pkg/apis/mobilesecurityservice/v1alpha1"
 	"github.com/integr8ly/integreatly-operator/pkg/apis/integreatly/v1alpha1"
-	mobilesecurityservice "github.com/integr8ly/integreatly-operator/pkg/apis/mobilesecurityservice/v1alpha1"
+
 	"github.com/integr8ly/integreatly-operator/pkg/controller/installation/marketplace"
 	"github.com/integr8ly/integreatly-operator/pkg/controller/installation/products/config"
 	"github.com/integr8ly/integreatly-operator/pkg/resources"
