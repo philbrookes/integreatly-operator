@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strings"
 
 	mobilesecurityservice "github.com/aerogear/mobile-security-service-operator/pkg/apis/mobilesecurityservice/v1alpha1"
+	"github.com/google/uuid"
 	"github.com/integr8ly/integreatly-operator/pkg/apis/integreatly/v1alpha1"
 
 	"github.com/integr8ly/integreatly-operator/pkg/controller/installation/marketplace"
@@ -99,6 +101,11 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 
 	r.logger.Debug("reconciling mobile security service db custom resource")
 
+	dbPassword, err := GeneratePassword()
+	if err != nil {
+		return v1alpha1.PhaseFailed, errors.New("password: error generating random db password")
+	}
+
 	mssDb := &mobilesecurityservice.MobileSecurityServiceDB{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "MobileSecurityServiceDB",
@@ -118,7 +125,7 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 			DatabaseName:           "mobile_security_service",
 			DatabaseNameParam:      "POSTGRESQL_DATABASE",
 			DatabasePassword:       "postgres",
-			DatabasePasswordParam:  "POSTGRESQL_PASSWORD",
+			DatabasePasswordParam:  dbPassword,
 			DatabasePort:           5432,
 			DatabaseStorageRequest: "1Gi",
 			DatabaseUser:           "postgresql",
@@ -217,4 +224,12 @@ checkPodStatus:
 
 	r.logger.Infof("all pods ready, returning complete")
 	return v1alpha1.PhaseCompleted, nil
+}
+
+func GeneratePassword() (string, error) {
+	generatedPassword, err := uuid.NewRandom()
+	if err != nil {
+		return "", errors.Wrap(err, "error generating password")
+	}
+	return strings.Replace(generatedPassword.String(), "-", "", 10), nil
 }

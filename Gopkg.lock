@@ -1306,6 +1306,7 @@
     "github.com/enmasseproject/enmasse/pkg/apis/enmasse/v1beta1",
     "github.com/fabric8-launcher/launcher-operator/pkg/apis/launcher/v1alpha2",
     "github.com/go-openapi/spec",
+    "github.com/google/uuid",
     "github.com/matryer/moq",
     "github.com/openshift/api/apps/v1",
     "github.com/openshift/api/image/v1",
