@@ -188,40 +188,104 @@ func TestReconciler_handleProgress(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	unreadyPods := []runtime.Object{}
-	for i := 0; i < 3; i++ {
-		unreadyPods = append(unreadyPods, &corev1.Pod{
+	mssCrUnavailable := []runtime.Object{
+		&mss.MobileSecurityServiceDB{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "MobileSecurityServiceDB",
+				APIVersion: fmt.Sprintf(
+					"%s/%s",
+					mss.SchemeGroupVersion.Group,
+					mss.SchemeGroupVersion.Version),
+			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%d", "mobile-security-service", i),
-				Namespace: defaultInstallationNamespace,
+				Name:      "mobile-security-service-db",
+				Namespace: "mobile-security-service",
 			},
-			Status: corev1.PodStatus{
-				Conditions: []corev1.PodCondition{
-					corev1.PodCondition{
-						Type:   corev1.ContainersReady,
-						Status: corev1.ConditionUnknown,
-					},
-				},
+			Status: mss.MobileSecurityServiceDBStatus{
+				DatabaseStatus: "OK",
 			},
-		})
+		}}
+
+	dbCrUnready := []runtime.Object{
+		&mss.MobileSecurityServiceDB{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "MobileSecurityServiceDB",
+				APIVersion: fmt.Sprintf(
+					"%s/%s",
+					mss.SchemeGroupVersion.Group,
+					mss.SchemeGroupVersion.Version),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mobile-security-service-db",
+				Namespace: "mobile-security-service",
+			},
+			Status: mss.MobileSecurityServiceDBStatus{
+				DatabaseStatus: "",
+			},
+		}}
+
+	mssCrUnready := []runtime.Object{
+		&mss.MobileSecurityServiceDB{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "MobileSecurityServiceDB",
+				APIVersion: fmt.Sprintf(
+					"%s/%s",
+					mss.SchemeGroupVersion.Group,
+					mss.SchemeGroupVersion.Version),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mobile-security-service-db",
+				Namespace: "mobile-security-service",
+			},
+			Status: mss.MobileSecurityServiceDBStatus{
+				DatabaseStatus: "OK",
+			},
+		},
+		&mss.MobileSecurityService{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "MobileSecurityService",
+				APIVersion: mss.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mobile-security-service",
+				Namespace: "mobile-security-service",
+			},
+			Status: mss.MobileSecurityServiceStatus{
+				AppStatus: "",
+			},
+		},
 	}
 
-	readyPods := []runtime.Object{}
-	for i := 0; i < 3; i++ {
-		readyPods = append(readyPods, &corev1.Pod{
+	allCrsReady := []runtime.Object{
+		&mss.MobileSecurityServiceDB{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "MobileSecurityServiceDB",
+				APIVersion: fmt.Sprintf(
+					"%s/%s",
+					mss.SchemeGroupVersion.Group,
+					mss.SchemeGroupVersion.Version),
+			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%d", "mobile-security-service", i),
-				Namespace: defaultInstallationNamespace,
+				Name:      "mobile-security-service-db",
+				Namespace: "mobile-security-service",
 			},
-			Status: corev1.PodStatus{
-				Conditions: []corev1.PodCondition{
-					corev1.PodCondition{
-						Type:   corev1.ContainersReady,
-						Status: corev1.ConditionTrue,
-					},
-				},
+			Status: mss.MobileSecurityServiceDBStatus{
+				DatabaseStatus: "OK",
 			},
-		})
+		},
+		&mss.MobileSecurityService{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "MobileSecurityService",
+				APIVersion: mss.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mobile-security-service",
+				Namespace: "mobile-security-service",
+			},
+			Status: mss.MobileSecurityServiceStatus{
+				AppStatus: "OK",
+			},
+		},
 	}
 
 	cases := []struct {
@@ -235,29 +299,41 @@ func TestReconciler_handleProgress(t *testing.T) {
 		Installation   *v1alpha1.Installation
 	}{
 		{
-			Name:           "test failure to list pods",
+			Name:           "test failure to get db cr",
 			ExpectedStatus: v1alpha1.PhaseFailed,
-			ExpectedError:  "failed to check mss installation",
+			ExpectedError:  "failed to get mss db cr when reconciling custom resource",
 			ExpectError:    true,
-			FakeClient: &moqclient.SigsClientInterfaceMock{
-				ListFunc: func(ctx context.Context, opts *client.ListOptions, list runtime.Object) error {
-					return errors.New("dummy create error")
-				},
-			},
-			FakeConfig:   basicConfigMock(),
-			Installation: &v1alpha1.Installation{},
-		},
-		{
-			Name:           "test unready pods returns phase in progress",
-			ExpectedStatus: v1alpha1.PhaseInProgress,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, unreadyPods...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
 		{
-			Name:           "test ready pods returns phase complete",
+			Name:           "test failure to get mss cr",
+			ExpectedStatus: v1alpha1.PhaseFailed,
+			ExpectedError:  "failed to get mss cr when reconciling custom resource",
+			ExpectError:    true,
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssCrUnavailable...),
+			FakeConfig:     basicConfigMock(),
+			Installation:   &v1alpha1.Installation{},
+		},
+		{
+			Name:           "test unready db cr returns phase in progress",
+			ExpectedStatus: v1alpha1.PhaseInProgress,
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, dbCrUnready...),
+			FakeConfig:     basicConfigMock(),
+			Installation:   &v1alpha1.Installation{},
+		},
+		{
+			Name:           "test unready mss cr returns phase in progress",
+			ExpectedStatus: v1alpha1.PhaseInProgress,
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssCrUnready...),
+			FakeConfig:     basicConfigMock(),
+			Installation:   &v1alpha1.Installation{},
+		},
+		{
+			Name:           "test ready db and mss crs returns phase complete",
 			ExpectedStatus: v1alpha1.PhaseCompleted,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, readyPods...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, allCrsReady...),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
@@ -314,23 +390,37 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			Namespace: defaultInstallationNamespace,
 			Name:      "mobile-security-service",
 		},
-	})
-	for i := 0; i < 3; i++ {
-		objs = append(objs, &corev1.Pod{
+	},
+		&mss.MobileSecurityServiceDB{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "MobileSecurityServiceDB",
+				APIVersion: fmt.Sprintf(
+					"%s/%s",
+					mss.SchemeGroupVersion.Group,
+					mss.SchemeGroupVersion.Version),
+			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%d", "mobile-security-service", i),
-				Namespace: defaultInstallationNamespace,
+				Name:      "mobile-security-service-db",
+				Namespace: "mobile-security-service",
 			},
-			Status: corev1.PodStatus{
-				Conditions: []corev1.PodCondition{
-					corev1.PodCondition{
-						Type:   corev1.ContainersReady,
-						Status: corev1.ConditionTrue,
-					},
-				},
+			Status: mss.MobileSecurityServiceDBStatus{
+				DatabaseStatus: "OK",
 			},
-		})
-	}
+		},
+		&mss.MobileSecurityService{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "MobileSecurityService",
+				APIVersion: mss.SchemeGroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "mobile-security-service",
+				Namespace: "mobile-security-service",
+			},
+			Status: mss.MobileSecurityServiceStatus{
+				AppStatus: "OK",
+			},
+		},
+	)
 
 	cases := []struct {
 		Name           string
@@ -347,7 +437,13 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			Name:           "test successful reconcile",
 			ExpectedStatus: v1alpha1.PhaseCompleted,
 			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, objs...),
-			FakeConfig:     basicConfigMock(),
+			FakeConfig: &config.ConfigReadWriterMock{
+				ReadMobileSecurityServiceFunc: func() (ready *config.MobileSecurityService, e error) {
+					return config.NewMobileSecurityService(config.ProductConfig{
+						"NAMESPACE": "",
+					}), nil
+				},
+			},
 			FakeMPM: &marketplace.MarketplaceInterfaceMock{
 				InstallOperatorFunc: func(ctx context.Context, serverClient pkgclient.Client, owner ownerutil.Owner, os marketplacev1.OperatorSource, t marketplace.Target, operatorGroupNamespaces []string, approvalStrategy operatorsv1alpha1.Approval) error {
 					return nil

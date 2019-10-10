@@ -135,6 +135,15 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 	}
 	ownerutil.EnsureOwner(mssDb, inst)
 
+	// try to get resource, otherwise create it
+	//if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssDb.Name, Namespace: mssDb.Namespace}, mssDb); err != nil {
+	//	r.logger.Debug("mobile security service db custom resource not found - creating it")
+	//	err := resources.CreateOrUpdate(ctx, client, mssDb)
+	//	if err != nil {
+	//		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service db custom resource")
+	//	}
+	//}
+
 	// attempt to create the mss db custom resource
 	if err := resources.CreateOrUpdate(ctx, client, mssDb); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service db custom resource")
@@ -202,6 +211,10 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 				mobilesecurityservice.SchemeGroupVersion.Group,
 				mobilesecurityservice.SchemeGroupVersion.Version),
 		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dbClusterName,
+			Namespace: r.Config.GetNamespace(),
+		},
 	}
 
 	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssDbCr.Name, Namespace: mssDbCr.Namespace}, mssDbCr); err != nil {
@@ -218,6 +231,10 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MobileSecurityService",
 			APIVersion: mobilesecurityservice.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serverClusterName,
+			Namespace: r.Config.GetNamespace(),
 		},
 	}
 
