@@ -16,7 +16,6 @@ import (
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/lib/ownerutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -192,33 +191,45 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 }
 
 func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.Client) (v1alpha1.StatusPhase, error) {
-	r.logger.Debug("checking mobile security service pods are running")
 
-	pods := &v1.PodList{}
-	err := client.List(ctx, &pkgclient.ListOptions{Namespace: r.Config.GetNamespace()}, pods)
-	if err != nil {
-		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to check mobile security service installation")
+	r.logger.Debug("checking status of mobile security service db cr")
+
+	mssDbCr := &mobilesecurityservice.MobileSecurityServiceDB{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "MobileSecurityServiceDB",
+			APIVersion: fmt.Sprintf(
+				"%s/%s",
+				mobilesecurityservice.SchemeGroupVersion.Group,
+				mobilesecurityservice.SchemeGroupVersion.Version),
+		},
 	}
 
-	//3 pods expected - operator, db, service
-	if len(pods.Items) < 3 { //TODO check if status value to check
+	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssDbCr.Name, Namespace: mssDbCr.Namespace}, mssDbCr); err != nil {
+		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get mss db cr when reconciling custom resource")
+	}
+
+	if mssDbCr.Status.DatabaseStatus != "OK" {
 		return v1alpha1.PhaseInProgress, nil
 	}
 
-	//and they should all be ready
-checkPodStatus:
-	for _, pod := range pods.Items {
-		for _, cnd := range pod.Status.Conditions {
-			if cnd.Type == v1.ContainersReady {
-				if cnd.Status != v1.ConditionStatus("True") {
-					return v1alpha1.PhaseInProgress, nil
-				}
-				break checkPodStatus
-			}
-		}
+	r.logger.Debug("checking status of mobile security service cr")
+
+	mssCr := &mobilesecurityservice.MobileSecurityService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MobileSecurityService",
+			APIVersion: mobilesecurityservice.SchemeGroupVersion.String(),
+		},
 	}
 
-	r.logger.Infof("all pods ready, returning complete")
+	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssCr.Name, Namespace: mssCr.Namespace}, mssCr); err != nil {
+		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get mss cr when reconciling custom resource")
+	}
+
+	if mssCr.Status.AppStatus != "OK" {
+		return v1alpha1.PhaseInProgress, nil
+	}
+
+	r.logger.Infof("all crs ready, returning complete")
 	return v1alpha1.PhaseCompleted, nil
 }
 
