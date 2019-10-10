@@ -168,7 +168,7 @@ func TestReconciler_reconcileCustomResource(t *testing.T) {
 				t.Fatal("unexpected err ", err)
 			}
 
-			phase, err := reconciler.handleCreatingComponents(context.TODO(), tc.FakeClient, tc.Installation)
+			phase, err := reconciler.reconcileComponents(context.TODO(), tc.FakeClient, tc.Installation)
 			if tc.ExpectError && err == nil {
 				t.Fatal("expected an error but got none")
 			}
@@ -359,12 +359,6 @@ func TestReconciler_fullReconcile(t *testing.T) {
 								APIVersion: mss.SchemeGroupVersion.String(),
 							},
 							ListMeta: metav1.ListMeta{},
-							//ObjectMeta: metav1.ObjectMeta{
-							//	Name: "mss-install-plan",
-							//},
-							//Status: operatorsv1alpha1.InstallPlanStatus{
-							//	Phase: operatorsv1alpha1.InstallPlanPhaseComplete,
-							//},
 						}, &operatorsv1alpha1.Subscription{
 							Status: operatorsv1alpha1.SubscriptionStatus{
 								Install: &operatorsv1alpha1.InstallPlanReference{
@@ -477,13 +471,6 @@ func TestReconciler_testPhases(t *testing.T) {
 								APIVersion: mss.SchemeGroupVersion.String(),
 							},
 							ListMeta: metav1.ListMeta{},
-							//ObjectMeta: metav1.ObjectMeta{
-							//	Name:      "mss-install-plan",
-							//	Namespace: "mobile-security-service",
-							//},
-							//Status: operatorsv1alpha1.InstallPlanStatus{
-							//	Phase: operatorsv1alpha1.InstallPlanPhaseComplete,
-							//},
 						}, &operatorsv1alpha1.Subscription{
 							Status: operatorsv1alpha1.SubscriptionStatus{
 								Install: &operatorsv1alpha1.InstallPlanReference{

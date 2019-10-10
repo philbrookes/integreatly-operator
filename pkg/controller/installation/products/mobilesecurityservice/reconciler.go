@@ -3,7 +3,6 @@ package mobilesecurityservice
 import (
 	"context"
 	"fmt"
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/integr8ly/integreatly-operator/pkg/apis/integreatly/v1alpha1"
@@ -23,7 +22,6 @@ import (
 var (
 	defaultInstallationNamespace = "mobile-security-service"
 	defaultSubscriptionName      = "integreatly-mobile-security-service"
-	clusterName                  = "integreatly-cluster"
 	serverClusterName            = "mobile-security-service"
 	dbClusterName                = "mobile-security-service-db"
 )
@@ -58,20 +56,15 @@ func NewReconciler(configManager config.ConfigReadWriter, instance *v1alpha1.Ins
 }
 
 func (r *Reconciler) GetPreflightObject(ns string) runtime.Object {
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "mobile-security-service",
-			Namespace: ns,
-		},
-	}
+	return nil
 }
 
-// Reconcile reads that state of the cluster for amq streams and makes changes based on the state read
+// Reconcile reads that state of the cluster for mobile security service and makes changes based on the state read
 // and what is required
 func (r *Reconciler) Reconcile(ctx context.Context, inst *v1alpha1.Installation, product *v1alpha1.InstallationProductStatus, serverClient pkgclient.Client) (v1alpha1.StatusPhase, error) {
 	ns := r.Config.GetNamespace()
 	if ns == "" {
-		// TODO return phase failed as default namespace should be set in NewReconciler
+		return v1alpha1.PhaseFailed, errors.New("namespace: value blank")
 	}
 	version, err := resources.NewVersion(v1alpha1.OperatorVersionMobileSecurityService)
 
@@ -85,7 +78,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, inst *v1alpha1.Installation,
 		return phase, err
 	}
 
-	phase, err = r.handleCreatingComponents(ctx, serverClient, inst)
+	phase, err = r.reconcileComponents(ctx, serverClient, inst)
 	if err != nil || phase != v1alpha1.PhaseCompleted {
 		return phase, err
 	}
@@ -102,7 +95,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, inst *v1alpha1.Installation,
 	return v1alpha1.PhaseCompleted, nil
 }
 
-func (r *Reconciler) handleCreatingComponents(ctx context.Context, client pkgclient.Client, inst *v1alpha1.Installation) (v1alpha1.StatusPhase, error) {
+func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.Client, inst *v1alpha1.Installation) (v1alpha1.StatusPhase, error) {
 
 	r.logger.Debug("reconciling mobile security service db custom resource")
 
@@ -204,7 +197,7 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to check mobile security service installation")
 	}
 
-	//4 pods expected - operator, db, service
+	//3 pods expected - operator, db, service
 	if len(pods.Items) < 3 { //TODO check if status value to check
 		return v1alpha1.PhaseInProgress, nil
 	}

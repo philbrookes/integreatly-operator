@@ -212,7 +212,7 @@ func (m *Manager) ReadUps() (*Ups, error) {
 }
 
 func (m *Manager) ReadMobileSecurityService() (*MobileSecurityService, error) {
-	config, err := m.readConfigForProduct(v1alpha1.ProductLauncher)
+	config, err := m.readConfigForProduct(v1alpha1.ProductMobileSecurityService)
 	if err != nil {
 		return nil, err
 	}
