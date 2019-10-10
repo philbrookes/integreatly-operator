@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
-	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -130,7 +129,7 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 	ownerutil.EnsureOwner(mssDb, inst)
 
 	// attempt to create the mss db custom resource
-	if err := client.Create(ctx, mssDb); err != nil && !k8serr.IsAlreadyExists(err) {
+	if err := resources.CreateOrUpdate(ctx, client, mssDb); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service db custom resource")
 	}
 
@@ -180,7 +179,7 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 	ownerutil.EnsureOwner(mss, inst)
 
 	// attempt to create the mss custom resource
-	if err := client.Create(ctx, mss); err != nil && !k8serr.IsAlreadyExists(err) {
+	if err := resources.CreateOrUpdate(ctx, client, mss); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service custom resource")
 	}
 
