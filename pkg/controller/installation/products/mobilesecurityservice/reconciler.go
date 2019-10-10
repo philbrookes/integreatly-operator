@@ -147,10 +147,6 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MobileSecurityService",
 			APIVersion: mobilesecurityservice.SchemeGroupVersion.String(),
-			//APIVersion: fmt.Sprintf(
-			//	"%s/%s",
-			//	&mobilesecurityservice.SchemeGroupVersion.Group,
-			//	&mobilesecurityservice.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serverClusterName,
