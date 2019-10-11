@@ -188,103 +188,65 @@ func TestReconciler_handleProgress(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mssCrUnavailable := []runtime.Object{
-		&mss.MobileSecurityServiceDB{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "MobileSecurityServiceDB",
-				APIVersion: fmt.Sprintf(
-					"%s/%s",
-					mss.SchemeGroupVersion.Group,
-					mss.SchemeGroupVersion.Version),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service-db",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceDBStatus{
-				DatabaseStatus: "OK",
-			},
-		}}
-
-	dbCrUnready := []runtime.Object{
-		&mss.MobileSecurityServiceDB{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "MobileSecurityServiceDB",
-				APIVersion: fmt.Sprintf(
-					"%s/%s",
-					mss.SchemeGroupVersion.Group,
-					mss.SchemeGroupVersion.Version),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service-db",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceDBStatus{
-				DatabaseStatus: "",
-			},
-		}}
-
-	mssCrUnready := []runtime.Object{
-		&mss.MobileSecurityServiceDB{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "MobileSecurityServiceDB",
-				APIVersion: fmt.Sprintf(
-					"%s/%s",
-					mss.SchemeGroupVersion.Group,
-					mss.SchemeGroupVersion.Version),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service-db",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceDBStatus{
-				DatabaseStatus: "OK",
-			},
+	mssDbNotUp := &mss.MobileSecurityServiceDB{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "MobileSecurityServiceDB",
+			APIVersion: fmt.Sprintf(
+				"%s/%s",
+				mss.SchemeGroupVersion.Group,
+				mss.SchemeGroupVersion.Version),
 		},
-		&mss.MobileSecurityService{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "MobileSecurityService",
-				APIVersion: mss.SchemeGroupVersion.String(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceStatus{
-				AppStatus: "",
-			},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mobile-security-service-db",
+			Namespace: "mobile-security-service",
+		},
+		Status: mss.MobileSecurityServiceDBStatus{
+			DatabaseStatus: "",
 		},
 	}
 
-	allCrsReady := []runtime.Object{
-		&mss.MobileSecurityServiceDB{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "MobileSecurityServiceDB",
-				APIVersion: fmt.Sprintf(
-					"%s/%s",
-					mss.SchemeGroupVersion.Group,
-					mss.SchemeGroupVersion.Version),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service-db",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceDBStatus{
-				DatabaseStatus: "OK",
-			},
+	mssDbUp := &mss.MobileSecurityServiceDB{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "MobileSecurityServiceDB",
+			APIVersion: fmt.Sprintf(
+				"%s/%s",
+				mss.SchemeGroupVersion.Group,
+				mss.SchemeGroupVersion.Version),
 		},
-		&mss.MobileSecurityService{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "MobileSecurityService",
-				APIVersion: mss.SchemeGroupVersion.String(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceStatus{
-				AppStatus: "OK",
-			},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mobile-security-service-db",
+			Namespace: "mobile-security-service",
+		},
+		Status: mss.MobileSecurityServiceDBStatus{
+			DatabaseStatus: "OK",
+		},
+	}
+
+	mssNotUp := &mss.MobileSecurityService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MobileSecurityService",
+			APIVersion: mss.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mobile-security-service",
+			Namespace: "mobile-security-service",
+		},
+		Status: mss.MobileSecurityServiceStatus{
+			AppStatus: "",
+		},
+	}
+
+	mssUp := &mss.MobileSecurityService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MobileSecurityService",
+			APIVersion: mss.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "mobile-security-service",
+			Namespace: "mobile-security-service",
+		},
+		Status: mss.MobileSecurityServiceStatus{
+			AppStatus: "OK",
 		},
 	}
 
@@ -312,28 +274,28 @@ func TestReconciler_handleProgress(t *testing.T) {
 			ExpectedStatus: v1alpha1.PhaseFailed,
 			ExpectedError:  "failed to get mss cr when reconciling custom resource",
 			ExpectError:    true,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssCrUnavailable...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssDbUp),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
 		{
 			Name:           "test unready db cr returns phase in progress",
 			ExpectedStatus: v1alpha1.PhaseInProgress,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, dbCrUnready...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssDbNotUp),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
 		{
 			Name:           "test unready mss cr returns phase in progress",
 			ExpectedStatus: v1alpha1.PhaseInProgress,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssCrUnready...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssDbUp, mssNotUp),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
 		{
 			Name:           "test ready db and mss crs returns phase complete",
 			ExpectedStatus: v1alpha1.PhaseCompleted,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, allCrsReady...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, mssDbUp, mssUp),
 			FakeConfig:     basicConfigMock(),
 			Installation:   &v1alpha1.Installation{},
 		},
@@ -367,8 +329,8 @@ func TestReconciler_fullReconcile(t *testing.T) {
 	}
 
 	// initialise runtime objects
-	objs := []runtime.Object{}
-	objs = append(objs, &corev1.Namespace{
+
+	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: defaultInstallationNamespace,
 			OwnerReferences: []metav1.OwnerReference{
@@ -381,7 +343,9 @@ func TestReconciler_fullReconcile(t *testing.T) {
 		Status: corev1.NamespaceStatus{
 			Phase: corev1.NamespaceActive,
 		},
-	}, &v1Route.Route{
+	}
+
+	route := &v1Route.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
 			APIVersion: "v1",
@@ -390,8 +354,9 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			Namespace: defaultInstallationNamespace,
 			Name:      "mobile-security-service",
 		},
-	},
-		&mss.MobileSecurityServiceDB{
+	}
+
+	mssDb := &mss.MobileSecurityServiceDB{
 			TypeMeta: metav1.TypeMeta{
 				Kind: "MobileSecurityServiceDB",
 				APIVersion: fmt.Sprintf(
@@ -406,8 +371,9 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			Status: mss.MobileSecurityServiceDBStatus{
 				DatabaseStatus: "OK",
 			},
-		},
-		&mss.MobileSecurityService{
+		}
+
+	mssServer := &mss.MobileSecurityService{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "MobileSecurityService",
 				APIVersion: mss.SchemeGroupVersion.String(),
@@ -419,8 +385,7 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			Status: mss.MobileSecurityServiceStatus{
 				AppStatus: "OK",
 			},
-		},
-	)
+		}
 
 	cases := []struct {
 		Name           string
@@ -436,7 +401,7 @@ func TestReconciler_fullReconcile(t *testing.T) {
 		{
 			Name:           "test successful reconcile",
 			ExpectedStatus: v1alpha1.PhaseCompleted,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, objs...),
+			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, namespace, route, mssDb, mssServer),
 			FakeConfig: &config.ConfigReadWriterMock{
 				ReadMobileSecurityServiceFunc: func() (ready *config.MobileSecurityService, e error) {
 					return config.NewMobileSecurityService(config.ProductConfig{
