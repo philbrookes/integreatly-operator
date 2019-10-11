@@ -322,138 +322,138 @@ func TestReconciler_handleProgress(t *testing.T) {
 	}
 }
 
-func TestReconciler_fullReconcile(t *testing.T) {
-	scheme, err := getBuildScheme()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// initialise runtime objects
-
-	namespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: defaultInstallationNamespace,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					Name:       "installation",
-					APIVersion: v1alpha1.SchemeGroupVersion.String(),
-				},
-			},
-		},
-		Status: corev1.NamespaceStatus{
-			Phase: corev1.NamespaceActive,
-		},
-	}
-
-	route := &v1Route.Route{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Route",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: defaultInstallationNamespace,
-			Name:      "mobile-security-service",
-		},
-	}
-
-	mssDb := &mss.MobileSecurityServiceDB{
-			TypeMeta: metav1.TypeMeta{
-				Kind: "MobileSecurityServiceDB",
-				APIVersion: fmt.Sprintf(
-					"%s/%s",
-					mss.SchemeGroupVersion.Group,
-					mss.SchemeGroupVersion.Version),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service-db",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceDBStatus{
-				DatabaseStatus: "OK",
-			},
-		}
-
-	mssServer := &mss.MobileSecurityService{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "MobileSecurityService",
-				APIVersion: mss.SchemeGroupVersion.String(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "mobile-security-service",
-				Namespace: "mobile-security-service",
-			},
-			Status: mss.MobileSecurityServiceStatus{
-				AppStatus: "OK",
-			},
-		}
-
-	cases := []struct {
-		Name           string
-		ExpectError    bool
-		ExpectedStatus v1alpha1.StatusPhase
-		ExpectedError  string
-		FakeConfig     *config.ConfigReadWriterMock
-		FakeClient     client.Client
-		FakeMPM        *marketplace.MarketplaceInterfaceMock
-		Installation   *v1alpha1.Installation
-		Product        *v1alpha1.InstallationProductStatus
-	}{
-		{
-			Name:           "test successful reconcile",
-			ExpectedStatus: v1alpha1.PhaseCompleted,
-			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, namespace, route, mssDb, mssServer),
-			FakeConfig: &config.ConfigReadWriterMock{
-				ReadMobileSecurityServiceFunc: func() (ready *config.MobileSecurityService, e error) {
-					return config.NewMobileSecurityService(config.ProductConfig{
-						"NAMESPACE": "",
-					}), nil
-				},
-			},
-			FakeMPM: &marketplace.MarketplaceInterfaceMock{
-				InstallOperatorFunc: func(ctx context.Context, serverClient pkgclient.Client, owner ownerutil.Owner, os marketplacev1.OperatorSource, t marketplace.Target, operatorGroupNamespaces []string, approvalStrategy operatorsv1alpha1.Approval) error {
-					return nil
-				},
-				GetSubscriptionInstallPlansFunc: func(ctx context.Context, serverClient client.Client, subName string, ns string) (plan *operatorsv1alpha1.InstallPlanList, subscription *operatorsv1alpha1.Subscription, e error) {
-					return &operatorsv1alpha1.InstallPlanList{
-							TypeMeta: metav1.TypeMeta{
-								Kind:       "MobileSecurityService",
-								APIVersion: mss.SchemeGroupVersion.String(),
-							},
-							ListMeta: metav1.ListMeta{},
-						}, &operatorsv1alpha1.Subscription{
-							Status: operatorsv1alpha1.SubscriptionStatus{
-								Install: &operatorsv1alpha1.InstallPlanReference{
-									Name: "mss-install-plan",
-								},
-							},
-						}, nil
-				},
-			},
-			Installation: basicInstallation(),
-			Product:      &v1alpha1.InstallationProductStatus{},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.Name, func(t *testing.T) {
-			reconciler, err := NewReconciler(tc.FakeConfig, tc.Installation, tc.FakeMPM)
-			if err != nil && err.Error() != tc.ExpectedError {
-				t.Fatalf("unexpected error : '%v', expected: '%v'", err, tc.ExpectedError)
-			}
-
-			status, err := reconciler.Reconcile(context.TODO(), tc.Installation, tc.Product, tc.FakeClient)
-			if err != nil && !tc.ExpectError {
-				t.Fatalf("expected error but got one: %v", err)
-			}
-			if err == nil && tc.ExpectError {
-				t.Fatal("expected error but got none")
-			}
-			if status != tc.ExpectedStatus {
-				t.Fatalf("Expected status: '%v', got: '%v'", tc.ExpectedStatus, status)
-			}
-		})
-	}
-}
+//func TestReconciler_fullReconcile(t *testing.T) {
+//	scheme, err := getBuildScheme()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// initialise runtime objects
+//
+//	namespace := &corev1.Namespace{
+//		ObjectMeta: metav1.ObjectMeta{
+//			Name: defaultInstallationNamespace,
+//			OwnerReferences: []metav1.OwnerReference{
+//				{
+//					Name:       "installation",
+//					APIVersion: v1alpha1.SchemeGroupVersion.String(),
+//				},
+//			},
+//		},
+//		Status: corev1.NamespaceStatus{
+//			Phase: corev1.NamespaceActive,
+//		},
+//	}
+//
+//	route := &v1Route.Route{
+//		TypeMeta: metav1.TypeMeta{
+//			Kind:       "Route",
+//			APIVersion: "v1",
+//		},
+//		ObjectMeta: metav1.ObjectMeta{
+//			Namespace: defaultInstallationNamespace,
+//			Name:      "mobile-security-service",
+//		},
+//	}
+//
+//	mssDb := &mss.MobileSecurityServiceDB{
+//			TypeMeta: metav1.TypeMeta{
+//				Kind: "MobileSecurityServiceDB",
+//				APIVersion: fmt.Sprintf(
+//					"%s/%s",
+//					mss.SchemeGroupVersion.Group,
+//					mss.SchemeGroupVersion.Version),
+//			},
+//			ObjectMeta: metav1.ObjectMeta{
+//				Name:      "mobile-security-service-db",
+//				Namespace: "mobile-security-service",
+//			},
+//			Status: mss.MobileSecurityServiceDBStatus{
+//				DatabaseStatus: "OK",
+//			},
+//		}
+//
+//	mssServer := &mss.MobileSecurityService{
+//			TypeMeta: metav1.TypeMeta{
+//				Kind:       "MobileSecurityService",
+//				APIVersion: mss.SchemeGroupVersion.String(),
+//			},
+//			ObjectMeta: metav1.ObjectMeta{
+//				Name:      "mobile-security-service",
+//				Namespace: "mobile-security-service",
+//			},
+//			Status: mss.MobileSecurityServiceStatus{
+//				AppStatus: "OK",
+//			},
+//		}
+//
+//	cases := []struct {
+//		Name           string
+//		ExpectError    bool
+//		ExpectedStatus v1alpha1.StatusPhase
+//		ExpectedError  string
+//		FakeConfig     *config.ConfigReadWriterMock
+//		FakeClient     client.Client
+//		FakeMPM        *marketplace.MarketplaceInterfaceMock
+//		Installation   *v1alpha1.Installation
+//		Product        *v1alpha1.InstallationProductStatus
+//	}{
+//		{
+//			Name:           "test successful reconcile",
+//			ExpectedStatus: v1alpha1.PhaseCompleted,
+//			FakeClient:     moqclient.NewSigsClientMoqWithScheme(scheme, namespace, route, mssDb, mssServer),
+//			FakeConfig: &config.ConfigReadWriterMock{
+//				ReadMobileSecurityServiceFunc: func() (ready *config.MobileSecurityService, e error) {
+//					return config.NewMobileSecurityService(config.ProductConfig{
+//						"NAMESPACE": "",
+//					}), nil
+//				},
+//			},
+//			FakeMPM: &marketplace.MarketplaceInterfaceMock{
+//				InstallOperatorFunc: func(ctx context.Context, serverClient pkgclient.Client, owner ownerutil.Owner, os marketplacev1.OperatorSource, t marketplace.Target, operatorGroupNamespaces []string, approvalStrategy operatorsv1alpha1.Approval) error {
+//					return nil
+//				},
+//				GetSubscriptionInstallPlansFunc: func(ctx context.Context, serverClient client.Client, subName string, ns string) (plan *operatorsv1alpha1.InstallPlanList, subscription *operatorsv1alpha1.Subscription, e error) {
+//					return &operatorsv1alpha1.InstallPlanList{
+//							TypeMeta: metav1.TypeMeta{
+//								Kind:       "MobileSecurityService",
+//								APIVersion: mss.SchemeGroupVersion.String(),
+//							},
+//							ListMeta: metav1.ListMeta{},
+//						}, &operatorsv1alpha1.Subscription{
+//							Status: operatorsv1alpha1.SubscriptionStatus{
+//								Install: &operatorsv1alpha1.InstallPlanReference{
+//									Name: "mss-install-plan",
+//								},
+//							},
+//						}, nil
+//				},
+//			},
+//			Installation: basicInstallation(),
+//			Product:      &v1alpha1.InstallationProductStatus{},
+//		},
+//	}
+//
+//	for _, tc := range cases {
+//		t.Run(tc.Name, func(t *testing.T) {
+//			reconciler, err := NewReconciler(tc.FakeConfig, tc.Installation, tc.FakeMPM)
+//			if err != nil && err.Error() != tc.ExpectedError {
+//				t.Fatalf("unexpected error : '%v', expected: '%v'", err, tc.ExpectedError)
+//			}
+//
+//			status, err := reconciler.Reconcile(context.TODO(), tc.Installation, tc.Product, tc.FakeClient)
+//			if err != nil && !tc.ExpectError {
+//				t.Fatalf("expected error but got one: %v", err)
+//			}
+//			if err == nil && tc.ExpectError {
+//				t.Fatal("expected error but got none")
+//			}
+//			if status != tc.ExpectedStatus {
+//				t.Fatalf("Expected status: '%v', got: '%v'", tc.ExpectedStatus, status)
+//			}
+//		})
+//	}
+//}
 
 func TestReconciler_testPhases(t *testing.T) {
 	scheme, err := getBuildScheme()
