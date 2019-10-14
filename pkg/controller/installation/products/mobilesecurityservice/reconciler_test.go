@@ -365,8 +365,8 @@ func TestReconciler_fullReconcile(t *testing.T) {
 				mss.SchemeGroupVersion.Version),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "mobile-security-service-db",
-			Namespace: "mobile-security-service",
+			Name:      dbClusterName,
+			Namespace: defaultInstallationNamespace,
 		},
 		Status: mss.MobileSecurityServiceDBStatus{
 			DatabaseStatus: "OK",
@@ -379,8 +379,8 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			APIVersion: mss.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "mobile-security-service",
-			Namespace: "mobile-security-service",
+			Name:      dbClusterName,
+			Namespace: defaultInstallationNamespace,
 		},
 		Status: mss.MobileSecurityServiceStatus{
 			AppStatus: "OK",

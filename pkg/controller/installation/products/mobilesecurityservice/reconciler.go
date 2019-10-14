@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 
 	mobilesecurityservice "github.com/aerogear/mobile-security-service-operator/pkg/apis/mobilesecurityservice/v1alpha1"
@@ -132,14 +133,13 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 			Image:                  "centos/postgresql-96-centos7",
 			Size:                   1,
 		},
-		Status: mobilesecurityservice.MobileSecurityServiceDBStatus{
-			DatabaseStatus: "not-ready",
-		},
 	}
 	ownerutil.EnsureOwner(mssDb, inst)
 
 	// attempt to create the mss db custom resource
-	if err := resources.CreateOrUpdate(ctx, client, mssDb); err != nil {
+	if _, err := controllerutil.CreateOrUpdate(ctx, client, mssDb, func(existing runtime.Object) error {
+		return nil
+	}); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service db custom resource")
 	}
 
@@ -181,14 +181,13 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 			RouteName:                     "route",
 			Size:                          1,
 		},
-		Status: mobilesecurityservice.MobileSecurityServiceStatus{
-			AppStatus: "not-ready",
-		},
 	}
 	ownerutil.EnsureOwner(mss, inst)
 
 	// attempt to create the mss custom resource
-	if err := resources.CreateOrUpdate(ctx, client, mss); err != nil {
+	if _, err := controllerutil.CreateOrUpdate(ctx, client, mss, func(existing runtime.Object) error {
+		return nil
+	}); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get or create a mobile security service custom resource")
 	}
 
@@ -200,22 +199,7 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 
 	r.logger.Debug("checking status of mobile security service db cr")
 
-	mssDbCr := &mobilesecurityservice.MobileSecurityServiceDB{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "MobileSecurityServiceDB",
-			APIVersion: fmt.Sprintf(
-				"%s/%s",
-				mobilesecurityservice.SchemeGroupVersion.Group,
-				mobilesecurityservice.SchemeGroupVersion.Version),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dbClusterName,
-			Namespace: r.Config.GetNamespace(),
-		},
-		Status: mobilesecurityservice.MobileSecurityServiceDBStatus{
-			DatabaseStatus: "not-ready",
-		},
-	}
+	mssDbCr := &mobilesecurityservice.MobileSecurityServiceDB{}
 
 	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssDbCr.Name, Namespace: mssDbCr.Namespace}, mssDbCr); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get mss db cr when reconciling custom resource")
@@ -227,19 +211,7 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 
 	r.logger.Debug("checking status of mobile security service cr")
 
-	mssCr := &mobilesecurityservice.MobileSecurityService{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "MobileSecurityService",
-			APIVersion: mobilesecurityservice.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      serverClusterName,
-			Namespace: r.Config.GetNamespace(),
-		},
-		Status: mobilesecurityservice.MobileSecurityServiceStatus{
-			AppStatus: "not-ready",
-		},
-	}
+	mssCr := &mobilesecurityservice.MobileSecurityService{}
 
 	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssCr.Name, Namespace: mssCr.Namespace}, mssCr); err != nil {
 		return v1alpha1.PhaseFailed, errors.Wrap(err, "failed to get mss cr when reconciling custom resource")
