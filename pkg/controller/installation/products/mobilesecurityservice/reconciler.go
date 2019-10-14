@@ -132,6 +132,9 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 			Image:                  "centos/postgresql-96-centos7",
 			Size:                   1,
 		},
+		Status: mobilesecurityservice.MobileSecurityServiceDBStatus{
+			DatabaseStatus: "not-ready",
+		},
 	}
 	ownerutil.EnsureOwner(mssDb, inst)
 
@@ -178,6 +181,9 @@ func (r *Reconciler) reconcileComponents(ctx context.Context, client pkgclient.C
 			RouteName:                     "route",
 			Size:                          1,
 		},
+		Status: mobilesecurityservice.MobileSecurityServiceStatus{
+			AppStatus: "not-ready",
+		},
 	}
 	ownerutil.EnsureOwner(mss, inst)
 
@@ -206,6 +212,9 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 			Name:      dbClusterName,
 			Namespace: r.Config.GetNamespace(),
 		},
+		Status: mobilesecurityservice.MobileSecurityServiceDBStatus{
+			DatabaseStatus: "not-ready",
+		},
 	}
 
 	if err := client.Get(ctx, pkgclient.ObjectKey{Name: mssDbCr.Name, Namespace: mssDbCr.Namespace}, mssDbCr); err != nil {
@@ -226,6 +235,9 @@ func (r *Reconciler) handleProgressPhase(ctx context.Context, client pkgclient.C
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serverClusterName,
 			Namespace: r.Config.GetNamespace(),
+		},
+		Status: mobilesecurityservice.MobileSecurityServiceStatus{
+			AppStatus: "not-ready",
 		},
 	}
 
