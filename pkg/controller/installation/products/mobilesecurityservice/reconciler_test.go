@@ -379,7 +379,7 @@ func TestReconciler_fullReconcile(t *testing.T) {
 			APIVersion: mss.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dbClusterName,
+			Name:      serverClusterName,
 			Namespace: defaultInstallationNamespace,
 		},
 		Status: mss.MobileSecurityServiceStatus{
