@@ -3,6 +3,8 @@ package mobilesecurityservice
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
 	"github.com/integr8ly/integreatly-operator/pkg/apis/integreatly/v1alpha1"
@@ -21,6 +23,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	marketplacev1 "github.com/operator-framework/operator-marketplace/pkg/apis/operators/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	pkgclient "sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -153,6 +156,12 @@ func TestReconciler_reconcileCustomResource(t *testing.T) {
 			FakeClient: &moqclient.SigsClientInterfaceMock{
 				CreateFunc: func(ctx context.Context, obj runtime.Object) error {
 					return errors.New("dummy create error")
+				},
+				GetFunc: func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+					return k8serr.NewNotFound(schema.GroupResource{
+						Group:    mss.SchemeBuilder.GroupVersion.Group,
+						Resource: "MobileSecurityServiceDB",
+					}, key.Name)
 				},
 			},
 			FakeConfig:     basicConfigMock(),
