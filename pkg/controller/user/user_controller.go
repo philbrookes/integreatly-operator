@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+
 	userHelper "github.com/integr8ly/integreatly-operator/pkg/resources/user"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -24,7 +25,7 @@ var (
 
 // Add creates a new User Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, products []string) error {
+func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 

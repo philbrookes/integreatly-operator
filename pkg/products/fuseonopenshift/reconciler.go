@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"path/filepath"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
+	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/sirupsen/logrus"
 
@@ -124,6 +126,7 @@ func NewReconciler(configManager config.ConfigReadWriter, installation *integrea
 
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	var httpClient http.Client
+	httpClient.Timeout = time.Second * 10
 
 	return &Reconciler{
 		ConfigManager: configManager,

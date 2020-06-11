@@ -210,14 +210,22 @@ cluster/prepare/osrc:
 
 .PHONY: cluster/prepare/crd
 cluster/prepare/crd:
-	- oc create -f deploy/crds/integreatly.org_rhmis_crd.yaml
-	- oc create -f deploy/crds/integreatly.org_rhmiconfigs_crd.yaml
+	@oc apply -f deploy/crds/integreatly.org_rhmis_crd.yaml
+	@oc apply -f deploy/crds/integreatly.org_rhmiconfigs_crd.yaml
+
+.PHONY: cluster/prepare/service
+cluster/prepare/service:
+	@oc apply -f deploy/webhook-service.yaml
 
 .PHONY: cluster/prepare/local
 cluster/prepare/local: cluster/prepare/project cluster/prepare/crd cluster/prepare/smtp cluster/prepare/dms cluster/prepare/pagerduty cluster/prepare/delorean
 	@oc create -f deploy/service_account.yaml
 	@oc create -f deploy/role.yaml
 	@oc create -f deploy/role_binding.yaml
+
+.PHONY: cluster/prepare/deployment
+cluster/prepare/deployment:
+	@sed "s|image:.*$$|image: $(INTEGREATLY_OPERATOR_IMAGE)|g" deploy/operator.yaml | oc apply -f - -n $(NAMESPACE)
 
 .PHONY: cluster/prepare/olm/subscription
 cluster/prepare/olm/subscription:
