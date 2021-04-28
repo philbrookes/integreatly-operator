@@ -14,7 +14,7 @@ import (
 	"github.com/integr8ly/integreatly-operator/pkg/resources/backup"
 	"github.com/integr8ly/integreatly-operator/pkg/resources/owner"
 
-	chev1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
+	chev1 "github.com/eclipse-che/che-operator/pkg/apis/org/v1"
 
 	crov1alpha1 "github.com/integr8ly/cloud-resource-operator/apis/integreatly/v1alpha1"
 	croUtil "github.com/integr8ly/cloud-resource-operator/pkg/client"

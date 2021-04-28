@@ -8,7 +8,7 @@ import (
 
 	prometheusmonitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 
-	chev1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
+	chev1 "github.com/eclipse-che/che-operator/pkg/apis/org/v1"
 
 	crov1 "github.com/integr8ly/cloud-resource-operator/apis/integreatly/v1alpha1"
 	types2 "github.com/integr8ly/cloud-resource-operator/apis/integreatly/v1alpha1/types"
